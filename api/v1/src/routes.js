@@ -13,6 +13,7 @@ const schemas = require('./models/request-schemas')
 const person = require('./handlers/person')
 const identifier = require('./handlers/identifier')
 const mpi = require('./handlers/mpi')
+const features = require('./handlers/features')
 
 const router = new Router()
 
@@ -24,5 +25,10 @@ router.get('/identifiers', validate(schemas.identifierQuery), identifier.findIde
 router.get('/identifiers/:mpi', validate(schemas.identifierList), identifier.listIdentifiers)
 router.put('/identifiers/:mpi', validate(schemas.identifierAddToPerson), identifier.addIdentifiers)
 router.get('/mpis', validate(schemas.listAllMpis), mpi.findAll)
+
+router.post('/features', features.add)
+router.get('/features', features.list)
+router.get('/features/:mnemonic', features.find)
+router.put('/features/:mnemonic', features.update)
 
 module.exports = router
