@@ -3,8 +3,6 @@ const pck = require('../package.json')
 
 const environment = env.NODE_ENV || 'dev'
 
-const TEST_DB = 'sqlite'
-
 const ENVVARS_REQUIRED_ERROR_MESSAGE = 'EXITING PROCESSES: MISSING REQUIRED ENVIRONMENT VARIABLES. Check if all of the following are set:'
 
 const ENVVARS_REQUIRED = [
