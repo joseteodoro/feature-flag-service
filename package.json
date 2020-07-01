@@ -1,0 +1,108 @@
+{
+  "name": "feature-flag",
+  "version": "1.0.0",
+  "description": "Apoio Feature Flag",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "npm run sequelize:migrate:secret && node --max-old-space-size=128 server/index.js",
+    "dev": "npm run sequelize:migrate && nodemon server/index.js",
+    "dev:debug": "nodemon --inspect=0.0.0.0 server/index.js",
+    "lint": "eslint ./api ./server ./config ./db --ext .json --ext .js --fix",
+    "prepare:pipeline": "rm -rf api/*/lcov-report; rm -rf api/*/out; rm -rf api/*/lcov.info; rm -rf api/*/.scannerwork; rm -rf api/*/.sonar",
+    "test:run:version": "bash -c 'printf \"\n\n-- testing $0 --\n\n\"; mocha --require \"$0/tests/helpers\" \"$0/tests/helpers/hooks\" \"$0/**/*@(.spec.js)\" --timeout 5000;'",
+    "test:all": "for v in ./api/*/; do npm run test:run:version $v; done",
+    "test": "npm run sequelize:migrate && npm run test:all;",
+    "test:debug": "source ./scripts/start-pg.sh; npm run sequelize:migrate && for v in ./api/*/; do printf \"\n\n-- testing $v --\n\n\"; mocha --inspect-brk --require $v/tests/helpers $v/tests/helpers/hooks \"$v/**/*@(.spec.js)\" -R dot --timeout 5000; done; ./scripts/stop-pg.sh; ./scripts/clean-pg.sh",
+    "test:cover": "npm run prepare:pipeline; nyc npm test",
+    "test:ci": "npm run prepare:pipeline; npm run sequelize:migrate; for v in ./api/*/; do nyc --report-dir=$v npm run test:run:version $v; done",
+    "sonar:scanner": "for v in ./api/*/; do (cd $v; sonar-scanner); done",
+    "sequelize:migrate": "sequelize db:migrate --env database",
+    "sequelize:migrate:revert": "sequelize db:migrate:undo --env database",
+    "sequelize:migrate:revert:all": "sequelize db:migrate:undo:all --env database"
+  },
+  "repository": {
+    "type": "bitbucket",
+    "url": ""
+  },
+  "keywords": [
+    "node",
+    "rest",
+    "microservice",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "homepage": "",
+  "husky": {
+    "hooks": {
+      "pre-push": "npm run lint && npm run test:cover"
+    }
+  },
+  "dependencies": {
+    "@koa/cors": "^2.2.2",
+    "continuation-local-storage": "^3.2.1",
+    "koa": "^2.5.0",
+    "koa-async-validator": "^0.1.2",
+    "koa-body": "^2.5.0",
+    "koa-bodyparser": "^4.2.0",
+    "koa-convert": "^1.2.0",
+    "koa-pino-logger": "^3.0.0",
+    "koa-router": "^7.4.0",
+    "pg": "^7.12.1",
+    "pg-hstore": "^2.3.3",
+    "pino": "^5.8.0",
+    "pino-pretty": "^2.2.2",
+    "prom-client": "^11.5.0",
+    "ramda": "^0.26.1",
+    "sequelize": "^5.19.0",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "cross-env": "^5.1.4",
+    "dotenv": "^5.0.1",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-json": "^1.2.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "eslint-watch": "^3.1.4",
+    "husky": "^1.3.1",
+    "mocha": "^5.2.0",
+    "nock": "^10.0.6",
+    "nodemon": "^1.18.7",
+    "nyc": "^14.1.1",
+    "sequelize-cli": "^5.5.1",
+    "sinon": "^6.1.4",
+    "sinon-chai": "^3.0.0",
+    "sonar-scanner": "^3.1.0",
+    "sonarqube-scanner": "^2.4.0",
+    "sqlite3": "^4.2.0",
+    "supertest": "^3.3.0"
+  },
+  "nyc": {
+    "all": true,
+    "instrument": true,
+    "extension": [
+      "js"
+    ],
+    "reporter": [
+      "lcov",
+      "text"
+    ],
+    "exclude": [
+      "db/**",
+      "server/**",
+      "config/**",
+      "api/v*/tests/**/*",
+      "api/*/out/**/*",
+      "api/*/lcov-report/**/*",
+      "api/*/.scannerwork/**/*",
+      "coverage",
+      "scripts"
+    ]
+  }
+}
