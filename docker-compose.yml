@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: feature-flag
+      POSTGRES_USER: feature-flag
+      POSTGRES_PASSWORD: feature-flag
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    networks:
+      feature-flag-api:
+
+  api:
+    image: node:erbium-alpine
+    depends_on:
+      - postgres
+    command: npm run dev
+    environment:
+      NODE_ENV: production
+      DB_DIALECT: postgres
+      DB_HOST: postgres
+      DB_DATABASE: feature-flag
+      DB_USER: feature-flag
+      DB_PASSWORD: feature-flag
+      DB_PORT: 5432
+    ports:
+      - "3000:3000"
+      - "9228:9229"
+    restart: "on-failure"
+    volumes:
+      - ./:/app
+    working_dir: /app
+    networks:
+      feature-flag-api:
+
+networks:
+  feature-flag-api:
+    name: feature-flag-api

@@ -1,0 +1,46 @@
+@Library('sre-pipeline-lib@master') _
+
+def serviceName = "identifier-api"
+def servicePath = "/"
+def registryRepository = "cloud-health/identifier-service"
+
+def productionEnv = [
+  NODE_ENV: 'production',
+  DB_DIALECT: 'postgres',
+  DB_PORT: '5432',
+  DB_HOST: 'health-cloud.crv7lcp2xspj.us-east-1.rds.amazonaws.com',
+  DB_DATABASE: 'rds-health-cloud-service-identifier',
+  DB_USER: 'rds-health-cloud-service-identifier',
+  DB_POOL_SIZE: '10',
+  DB_CONN_ACQUIRE: '1000',
+  DB_CONN_IDLE: '1000',
+  DB_CONN_EVICT: '1000',
+  DB_SECRET_EXPIRATION: "${10 * 60 * 1000}" // ten minutes
+]
+
+def containers = [
+  containerTemplate(
+    name: 'postgres',
+    image: 'postgres:latest',
+    ttyEnabled: true,
+    ports: [portMapping(name: 'postgres', containerPort: 5432, hostPort: 5432)],
+    envVars: [
+      envVar(key: 'POSTGRES_DB', value: 'identifier'),
+      envVar(key: 'POSTGRES_USER', value: 'identifier'),
+      envVar(key: 'POSTGRES_PASSWORD', value: 'identifier')
+    ]
+  )
+]
+
+nodeJSApi(
+  name: serviceName,
+  servicePath: servicePath,
+  branch: env.BRANCH_NAME,
+  nodeImage: 'node:erbium',
+  containers: containers,
+  testEnvFile: 'config/test.env',
+  productionEnv: productionEnv,
+  registryRepository: registryRepository,
+  canaryEnabled: false,
+  isAWS: true
+)

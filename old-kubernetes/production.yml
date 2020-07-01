@@ -1,0 +1,166 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: '${ trigger.properties["application"] }'
+  name: '${ trigger.properties["application"] }'
+  namespace: cloud-health
+spec:
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: '${ trigger.properties["application"] }'
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: '${ trigger.properties["application"] }'
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: '${ trigger.properties["application"] }'
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - env:
+            - name: NODE_ENV
+              value: production
+            - name: API_PORT
+              value: '3000'
+            - name: DB_DIALECT
+              value: '${ trigger.properties["environment"]["production"]["DB_DIALECT"] }'
+            - name: DB_HOST
+              value: '${ trigger.properties["environment"]["production"]["DB_HOST"] }'
+            - name: DB_USER
+              value: '${ trigger.properties["environment"]["production"]["DB_USER"] }'
+            - name: DB_DATABASE
+              value: '${ trigger.properties["environment"]["production"]["DB_DATABASE"] }'
+            - name: DB_PORT
+              value: '${ trigger.properties["environment"]["production"]["DB_PORT"] }'
+            - name: DB_POOL_SIZE
+              value: '${ trigger.properties["environment"]["production"]["DB_POOL_SIZE"] }'
+            - name: DB_CONN_IDLE
+              value: '${ trigger.properties["environment"]["production"]["DB_CONN_IDLE"] }'
+            - name: DB_CONN_EVICT
+              value: '${ trigger.properties["environment"]["production"]["DB_CONN_EVICT"] }'
+            - name: DB_SECRET_EXPIRATION
+              value: '${ trigger.properties["environment"]["production"]["DB_SECRET_EXPIRATION"] }'
+
+          image: '${ trigger.properties["imageUrl"] }'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 30
+            successThreshold: 1
+          name: '${ trigger.properties["application"] }'
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: 500m
+              memory: 480Mi
+            requests:
+              cpu: 300m
+              memory: 240Mi
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: '${ trigger.properties["application"] }'
+  name: '${ trigger.properties["application"] }'
+  namespace: cloud-health
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app: '${ trigger.properties["application"] }'
+  type: ClusterIP
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: 'true'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  labels:
+    app: '${ trigger.properties["application"] }'
+  name: '${ trigger.properties["application"] }'
+  namespace: cloud-health
+spec:
+  rules:
+    - host: identifier-service.nexadigital.com.br
+      http:
+        paths:
+          - backend:
+              serviceName: '${ trigger.properties["application"] }'
+              servicePort: 80
+            path: /
+  tls:
+    - hosts:
+        - identifier-service.nexadigital.com.br
+
+---
+
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: '${ trigger.properties["application"] }'
+  namespace: cloud-health
+  labels:
+    app: '${ trigger.properties["application"] }'
+spec:
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: 80
+  scaleTargetRef:
+    apiVersion: apps/v1beta2
+    kind: Deployment
+    name: '${ trigger.properties["application"] }'
+
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: '${ trigger.properties["application"] }'
+    release: prometheus
+  name: '${ trigger.properties["application"] }'
+  namespace: monitoring
+spec:
+  endpoints:
+    - path: /metrics
+      port: http
+  namespaceSelector:
+    matchNames:
+      - cloud-health
+  selector:
+    matchLabels:
+      app: '${ trigger.properties["application"] }'
