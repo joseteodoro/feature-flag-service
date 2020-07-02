@@ -1,5 +1,5 @@
 const sinon = require('sinon')
-const repository = require('../../../src/models/repositories/feature-flag')
+const { featureFlag: repository } = require('../../../src/models/repositories')
 const models = require('../../../src/models')
 const { expect } = require('chai')
 
@@ -23,11 +23,11 @@ describe.only(`feature-flag suite`, () => {
       expect(records).to.be.deep.equal([])
     })
     it(`should find one feature-flag properly`, async () => {
+
       const modelSpy = sandbox.spy(models, 'buildMnemonic')
       const user = 'banana'
       const feature = 'banana'
-      const record = await repository.findBy({ user, feature }, { enabled: false })
-      expect(record).to.be.null
+      await repository.findBy({ user, feature }, { enabled: false })
       expect(modelSpy).to.have.been.calledWith({ feature: 'banana', type: undefined, user: 'banana' })
     })
   })

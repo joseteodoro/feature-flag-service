@@ -1,6 +1,6 @@
 const createTestServer = require('../helpers/server')
 
-describe('server/server suite', () => {
+describe.only('server/server suite', () => {
   let request
 
   beforeEach(async () => {

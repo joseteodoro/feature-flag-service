@@ -25,13 +25,13 @@ const add = ctx =>
   service
     .addFeature(ctx.request.body)
     .then(R.always(201))
-    .then(set('body', ctx))
+    .then(set('status', ctx))
 
 const update = ctx =>
   service
     .updateFeature(ctx.params.mnemonic, ctx.request.body)
     .then(R.always(201))
-    .then(set('body', ctx))
+    .then(set('status', ctx))
 
 module.exports = {
   find,
