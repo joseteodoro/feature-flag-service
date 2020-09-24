@@ -1,30 +1,22 @@
 const uuid = require('uuid').v4
-
-const FEATURE_TYPES = {
-  BOUNCE: 'BOUNCE',
-  SAMPLE: 'SAMPLE',
-  RANDOM: 'RANDOM',
-  EVERYONE: 'EVERYONE',
-  BETA: 'BETA',
-  NO_ONE: 'NO_ONE',
-}
+const { TYPES } = require('../../src/models/feature-types')
 
 const features = [
-  { mnemonic: 0, id: uuid(), feature: 'banana bounced 100%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 1 },
-  { mnemonic: 1, id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.1 },
-  { mnemonic: 2, id: uuid(), feature: 'banana sample', enabled: true, type: FEATURE_TYPES.SAMPLE },
-  { mnemonic: 3, id: uuid(), feature: 'banana bounced 0%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0 },
-  { mnemonic: 4, id: uuid(), feature: 'banana bounced 10%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0.1 },
-  { mnemonic: 5, id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.9 },
-  { mnemonic: 6, id: uuid(), feature: 'banana sample 100%', enabled: true, type: FEATURE_TYPES.SAMPLE, range: 1 },
-  { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: FEATURE_TYPES.SAMPLE, range: 1 },
-  { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: FEATURE_TYPES.RANDOM, range: 1 },
-  { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: FEATURE_TYPES.BOUNCE, range: 1 },
-  { mnemonic: 10, id: uuid(), feature: 'noone banana', enabled: true, type: FEATURE_TYPES.NO_ONE, range: 1 },
-  { mnemonic: 11, id: uuid(), feature: 'everyone banana 100%', enabled: true, type: FEATURE_TYPES.EVERYONE, range: 1 },
-  { mnemonic: 12, id: uuid(), feature: 'disabled everyone banana 100%', enabled: false, type: FEATURE_TYPES.EVERYONE, range: 1 },
-  { mnemonic: 13, id: uuid(), feature: 'beta banana 100%', enabled: true, type: FEATURE_TYPES.BETA, range: 1 },
-  { mnemonic: 14, id: uuid(), feature: 'disabled beta banana 100%', enabled: false, type: FEATURE_TYPES.BETA, range: 1 },
+  { mnemonic: 0, id: uuid(), feature: 'banana bounced 100%', enabled: true, type: TYPES.BOUNCE, range: 1 },
+  { mnemonic: 1, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 0.1 },
+  { mnemonic: 2, id: uuid(), feature: 'banana sample', enabled: true, type: TYPES.SAMPLE },
+  { mnemonic: 3, id: uuid(), feature: 'banana bounced 0%', enabled: true, type: TYPES.BOUNCE, range: 0 },
+  { mnemonic: 4, id: uuid(), feature: 'banana bounced 10%', enabled: true, type: TYPES.BOUNCE, range: 0.1 },
+  { mnemonic: 5, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 0.9 },
+  { mnemonic: 6, id: uuid(), feature: 'banana sample 100%', enabled: true, type: TYPES.SAMPLE, range: 1 },
+  { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: TYPES.SAMPLE, range: 1 },
+  { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: TYPES.RANDOM, range: 1 },
+  { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: TYPES.BOUNCE, range: 1 },
+  { mnemonic: 10, id: uuid(), feature: 'noone banana', enabled: true, type: TYPES.NO_ONE, range: 1 },
+  { mnemonic: 11, id: uuid(), feature: 'everyone banana 100%', enabled: true, type: TYPES.EVERYONE, range: 1 },
+  { mnemonic: 12, id: uuid(), feature: 'disabled everyone banana 100%', enabled: false, type: TYPES.EVERYONE, range: 1 },
+  { mnemonic: 13, id: uuid(), feature: 'beta banana 100%', enabled: true, type: TYPES.BETA, range: 1 },
+  { mnemonic: 14, id: uuid(), feature: 'disabled beta banana 100%', enabled: false, type: TYPES.BETA, range: 1 },
 ]
 
 const users = [
@@ -162,12 +154,12 @@ const bouncedEngine = async ({ feature, bounce = defaultBounce() }) => {
 const falsy = async () => false
 
 const engines = {
-  [FEATURE_TYPES.BOUNCE]: bouncedEngine,
-  [FEATURE_TYPES.RANDOM]: randomEngine,
-  [FEATURE_TYPES.SAMPLE]: sampleEngine,
-  [FEATURE_TYPES.EVERYONE]: truthy,
-  [FEATURE_TYPES.BETA]: betaEngine,
-  [FEATURE_TYPES.NO_ONE]: falsy,
+  [TYPES.BOUNCE]: bouncedEngine,
+  [TYPES.RANDOM]: randomEngine,
+  [TYPES.SAMPLE]: sampleEngine,
+  [TYPES.EVERYONE]: truthy,
+  [TYPES.BETA]: betaEngine,
+  [TYPES.NO_ONE]: falsy,
 }
 
 const engineByType = ({ type, enabled }) => {
