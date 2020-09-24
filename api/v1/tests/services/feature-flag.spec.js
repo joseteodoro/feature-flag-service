@@ -90,11 +90,10 @@ const addBetaOrRand = (user, feature, needMore) => loadedUser => {
 }
 
 const randomAdd = (user, feature) => async (needMore) => {
-  if (!needMore.needMore) {
-    return false
-  }
-  return service.findUser(user)
-    .then(addBetaOrRand(user, feature, needMore))
+  return needMore.needMore
+    ? service.findUser(user)
+      .then(addBetaOrRand(user, feature, needMore))
+    : false
 }
 
 const randomEngine = async ({ user, feature }) => {
@@ -128,9 +127,11 @@ const engineByType = ({ type }) => engines[type] || bouncedEngine
 const engineByFeature = (ft) => service.findFeature(ft)
   .then(engineByType)
 
+const invoke = args => fn => fn(args)
+
 const engine = ({ feature, bounce, user }) => {
   return engineByFeature(feature)
-    .then(run => run({ feature, bounce, user }))
+    .then(invoke({ feature, bounce, user }))
 }
 
 describe.only('verify feature-flags', () => {
