@@ -96,11 +96,14 @@ const randomAdd = (user, feature) => async (needMore) => {
     : false
 }
 
+const addIfNeeded = (user, feature) => featured => {
+  return featured || shouldAddMore(feature)
+    .then(randomAdd(user, feature))
+}
+
 const randomEngine = async ({ user, feature }) => {
   return service.isFeatured(user, feature)
-    .then(featured => featured || shouldAddMore(feature)
-      .then(randomAdd(user, feature))
-    )
+    .then(addIfNeeded(user, feature))
 }
 
 const sampleEngine = async ({ user, feature }) => {
@@ -131,6 +134,8 @@ const invoke = args => fn => fn(args)
 
 const engine = ({ feature, bounce, user }) => engineByFeature(feature)
   .then(invoke({ feature, bounce, user }))
+
+// tests
 
 describe.only('verify feature-flags', () => {
   describe('for random ones', () => {
