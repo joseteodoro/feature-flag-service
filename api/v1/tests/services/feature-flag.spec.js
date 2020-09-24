@@ -7,34 +7,48 @@ const FEATURE_TYPES = {
 }
 
 const features = [
-  { id: uuid(), feature: 'banana bounced 100%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 1 },
-  { id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.3 },
-  { id: uuid(), feature: 'banana sample', enabled: true, type: FEATURE_TYPES.SAMPLE },
-  { id: uuid(), feature: 'banana bounced 0%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0 },
-  { id: uuid(), feature: 'banana bounced 10%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0.1 },
-  { id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.9 },
-  { id: uuid(), feature: 'banana sample 100%', enabled: true, type: FEATURE_TYPES.SAMPLE, range: 1 },
+  { mnemonic: 0, id: uuid(), feature: 'banana bounced 100%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 1 },
+  { mnemonic: 1, id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.1 },
+  { mnemonic: 2, id: uuid(), feature: 'banana sample', enabled: true, type: FEATURE_TYPES.SAMPLE },
+  { mnemonic: 3, id: uuid(), feature: 'banana bounced 0%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0 },
+  { mnemonic: 4, id: uuid(), feature: 'banana bounced 10%', enabled: true, type: FEATURE_TYPES.BOUNCE, range: 0.1 },
+  { mnemonic: 5, id: uuid(), feature: 'banana random', enabled: true, type: FEATURE_TYPES.RANDOM, range: 0.9 },
+  { mnemonic: 6, id: uuid(), feature: 'banana sample 100%', enabled: true, type: FEATURE_TYPES.SAMPLE, range: 1 },
+  { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: FEATURE_TYPES.SAMPLE, range: 1 },
+  { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: FEATURE_TYPES.RANDOM, range: 1 },
+  { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: FEATURE_TYPES.BOUNCE, range: 1 },
 ]
 
 const users = [
   { id: uuid(), name: 'lab do joaquim', beta: true },
   { id: uuid(), name: 'lab do bacana', beta: true },
   { id: uuid(), name: 'lab do bambu', beta: true },
+  { id: uuid(), name: 'lab do disabled', beta: true },
 ]
 
 const db = {
   features,
   users,
   featured: [
-    { feature: features[0].id, user: users[0].id },
-    { feature: features[1].id, user: users[0].id },
-    { feature: features[2].id, user: users[0].id },
+    { feature: features[0].id, user: users[0].id, enabled: true },
+    { feature: features[1].id, user: users[0].id, enabled: true },
+    { feature: features[2].id, user: users[0].id, enabled: true },
+    { feature: features[6].id, user: users[1].id, enabled: false },
+    { feature: features[7].id, user: users[0].id, enabled: false },
+    { feature: features[0].id, user: users[3].id, enabled: false },
+    { feature: features[6].id, user: users[3].id, enabled: false },
+    { feature: features[5].id, user: users[3].id, enabled: false },
+    { feature: features[7].id, user: users[0].id, enabled: false },
+    { feature: features[8].id, user: users[0].id, enabled: false },
+    { feature: features[9].id, user: users[0].id, enabled: false },
   ],
 }
 
 // db functions
 
 const isFeatured = async (us, ft) => !!db.featured.find(({ user, feature }) => user === us && feature === ft)
+
+const isFeaturedEnabled = async (us, ft) => !!db.featured.find(({ user, feature, enabled }) => user === us && feature === ft && enabled)
 
 const countFeatured = async (ft) => db.featured.filter(({ feature }) => feature === ft).length
 
@@ -66,7 +80,7 @@ const needMoreUsers = async (featured, feature, userCount) => {
   }
 }
 
-const dbInvoker = (ft) => {
+const hydratateFeatureData = (ft) => {
   return Promise.all([
     service.countUsers(),
     service.findFeature(ft),
@@ -75,7 +89,7 @@ const dbInvoker = (ft) => {
 }
 
 const shouldAddMore = async (ft) => {
-  return dbInvoker(ft)
+  return hydratateFeatureData(ft)
     .then(([userCount, feature, featured]) => {
       return needMoreUsers(featured, feature, userCount)
     })
@@ -99,8 +113,10 @@ const randomAdd = (user, feature) => async (needMore) => {
 }
 
 const addIfNeeded = (user, feature) => featured => {
-  return featured || shouldAddMore(feature)
-    .then(randomAdd(user, feature))
+  return featured
+    ? isFeaturedEnabled(user, feature)
+    : shouldAddMore(feature)
+      .then(randomAdd(user, feature))
 }
 
 const randomEngine = async ({ user, feature }) => {
@@ -110,6 +126,7 @@ const randomEngine = async ({ user, feature }) => {
 
 const sampleEngine = async ({ user, feature }) => {
   return service.isFeatured(user, feature)
+    .then(featured => featured && isFeaturedEnabled(user, feature))
 }
 
 const defaultBounce = () => Math.random() * 100
@@ -127,7 +144,14 @@ const engines = {
   [FEATURE_TYPES.SAMPLE]: sampleEngine,
 }
 
-const engineByType = ({ type }) => engines[type] || bouncedEngine
+const falsy = async () => false
+
+const engineByType = ({ type, enabled }) => {
+  if (enabled) {
+    return engines[type] || bouncedEngine
+  }
+  return falsy
+}
 
 const engineByFeature = (ft) => service.findFeature(ft)
   .then(engineByType)
@@ -146,7 +170,7 @@ describe.only('verify feature-flags', () => {
       const { id: feature } = db.features[1]
       expect(await engine({ feature, user })).to.be.true
     })
-    it('should return false for beta tester if we dont need more more featured', async () => {
+    it('should return false for beta tester if we dont need more featured', async () => {
       const { id: user } = db.users[2]
       const { id: feature } = db.features[1]
       expect(await engine({ feature, user })).to.be.false
@@ -155,6 +179,16 @@ describe.only('verify feature-flags', () => {
       const { id: user } = db.users[2]
       const { id: feature } = db.features[5]
       expect(await engine({ feature, user })).to.be.true
+    })
+    it('should return false if ramdom featured disabled', async () => {
+      const { id: user } = db.users[3]
+      const { id: feature } = db.features[5]
+      expect(await engine({ feature, user })).to.be.false
+    })
+    it('should return false if random feature disabled', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[8]
+      expect(await engine({ feature, user })).to.be.false
     })
   })
   describe('for sample ones', () => {
@@ -166,6 +200,16 @@ describe.only('verify feature-flags', () => {
     it('should return false for anyone outside the sample', async () => {
       const { id: user } = db.users[2]
       const { id: feature } = db.features[6]
+      expect(await engine({ feature, user })).to.be.false
+    })
+    it('should return false if sample featured disabled', async () => {
+      const { id: user } = db.users[3]
+      const { id: feature } = db.features[6]
+      expect(await engine({ feature, user })).to.be.false
+    })
+    it('should return false if sample feature disabled', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[7]
       expect(await engine({ feature, user })).to.be.false
     })
   })
@@ -185,6 +229,11 @@ describe.only('verify feature-flags', () => {
     it('should return true if bounce 10% and bounced greater than that', async () => {
       const { id: feature } = db.features[4]
       expect(await engine({ feature, bounce: 90 })).to.be.false
+    })
+    it('should return false if bounced feature disabled', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[9]
+      expect(await engine({ feature, user })).to.be.false
     })
   })
 })
