@@ -66,16 +66,18 @@ const needMoreUsers = async (featured, feature, userCount) => {
   }
 }
 
+const dbInvoker = (ft) => {
+  return Promise.all([
+    service.countUsers(),
+    service.findFeature(ft),
+    service.countFeatured(ft),
+  ])
+}
+
 const shouldAddMore = async (ft) => {
-  return service.countUsers()
-    .then(userCount => {
-      return service.findFeature(ft)
-        .then(loaded => {
-          return service.countFeatured(ft)
-            .then(featured => {
-              return needMoreUsers(featured, loaded, userCount)
-            })
-        })
+  return dbInvoker(ft)
+    .then(([userCount, feature, featured]) => {
+      return needMoreUsers(featured, feature, userCount)
     })
 }
 
