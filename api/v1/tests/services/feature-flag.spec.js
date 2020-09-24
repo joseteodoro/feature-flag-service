@@ -67,6 +67,7 @@ const service = {
   findUser,
   addFeatured,
   countUsers,
+  isFeaturedEnabled,
 }
 
 // end of db
@@ -114,7 +115,7 @@ const randomAdd = (user, feature) => async (needMore) => {
 
 const addIfNeeded = (user, feature) => featured => {
   return featured
-    ? isFeaturedEnabled(user, feature)
+    ? service.isFeaturedEnabled(user, feature)
     : shouldAddMore(feature)
       .then(randomAdd(user, feature))
 }
@@ -126,13 +127,13 @@ const randomEngine = async ({ user, feature }) => {
 
 const sampleEngine = async ({ user, feature }) => {
   return service.isFeatured(user, feature)
-    .then(featured => featured && isFeaturedEnabled(user, feature))
+    .then(featured => featured && service.isFeaturedEnabled(user, feature))
 }
 
 const addIfBeta = (user, feature) => featured => {
   const forceBetaUsers = { range: -1, needMore: true }
   return featured
-    ? isFeaturedEnabled(user, feature)
+    ? service.isFeaturedEnabled(user, feature)
     : service.findUser(user)
       .then(addBetaOrRand(user, feature, forceBetaUsers))
 }

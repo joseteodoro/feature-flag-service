@@ -1,56 +1,38 @@
-const R = require('ramda')
-const common = require('./common')
-const TYPES = require('../feature-types')
-const { Feature, FeatureTag, Beta } = require('../entities')
+const uuid = require('uuid').v4
+const { Feature, Featured, Users } = require('../entities')
 
-const loadFeatureModel = () => Promise.resolve(Feature())
+const countFeatured = async (ft) => db.featured.filter(({ feature }) => feature === ft).length
 
-const loadFeatureTagModel = () => Promise.resolve(FeatureTag())
+const countUsers = async () => db.users.length
 
-const loadBetaModel = () => Promise.resolve(Beta())
-
-const addFeature = common.add(loadFeatureModel)
-
-const findFeature = common.findOne(loadFeatureModel)
-
-const findTag = ({feature, name}) => common.findOne(loadFeatureTagModel)(name, { feature })
-
-const addTag = ({feature, name}) => () => findTag({feature, name})
-  .catch(() => common.add(loadFeatureTagModel)({
+const addFeatured = async (user, feature) => Featured()
+  .then(model => model.create({
+    user,
     feature,
-    name,
     enabled: true,
+    id: uuid(),
   }))
 
-const addFeatureTag = ({feature, tag}) => findFeature(feature)
-  .catch(() => addFeature({
-    name: feature,
-    enabled: true,
-    allow: TYPES.SOME_ONE,
-  }))
-  .then(addTag({feature, tag}))
+const isFeaturedEnabled = async (user, feature) => Featured()
+  .then(model => !!model.findOne({ where: { user, feature, enabled: true } }))
 
-module.exports = {
-  feature: {
-    add: addFeature,
-    findOne: findFeature,
-    list: common.list(loadFeatureModel),
-    update: common.update(loadFeatureModel),
-    disable: R.pipe(findFeature, R.then(common.disable)),
-    enable: R.pipe(findFeature, R.then(common.enable)),
-  },
-  tag: {
-    add: addFeatureTag,
-    findOne: findTag,
-    list: common.list(loadFeatureTagModel),
-    disable: R.pipe(findTag, R.then(common.disable)),
-    enable: R.pipe(findTag, R.then(common.enable)),
-  },
-  beta: {
-    add: common.add(loadBetaModel),
-    findOne: common.findOne(loadBetaModel),
-    list: common.list(loadBetaModel),
-    disable: R.pipe(common.findOne(loadBetaModel), R.then(common.disable)),
-    enable: R.pipe(common.findOne(loadBetaModel), R.then(common.enable)),
-  },
+const findFeature = async (feature) => Feature()
+  .then(model => model.findOne({ where: { id: feature } }))
+
+const findUser = async (user) => Users()
+  .then(model => model.findOne({ where: { id: user } }))
+
+const isFeatured = async (user, feature) => Featured()
+  .then(model => !!model.findOne({ where: { user, feature } }))
+
+const repo = {
+  isFeatured,
+  countFeatured,
+  findFeature,
+  findUser,
+  addFeatured,
+  countUsers,
+  isFeaturedEnabled,
 }
+
+module.exports = repo
