@@ -1,4 +1,4 @@
-const DEFAULT_ADMIN = 'admin@citlab.com'
+const TYPES = require('../../api/v1/src/models/feature-types')
 
 const schema = Sequelize => ({
   id: {
@@ -6,7 +6,7 @@ const schema = Sequelize => ({
     primaryKey: true,
     autoIncrement: true,
   },
-  mnemonic: {
+  name: {
     type: Sequelize.STRING,
     allowNull: false,
   },
@@ -15,16 +15,15 @@ const schema = Sequelize => ({
     allowNull: false,
     defaultValue: false,
   },
-  createdBy: {
-    type: Sequelize.STRING,
+  allow: {
+    type: Sequelize.ENUM,
+    values: Object.values(TYPES),
     allowNull: false,
-    defaultValue: DEFAULT_ADMIN,
-    field: 'created_by',
   },
-  updatedBy: {
-    type: Sequelize.STRING,
-    allowNull: DEFAULT_ADMIN,
-    field: 'updated_by',
+  span: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
   },
   createdAt: {
     type: Sequelize.DATE,
@@ -39,17 +38,17 @@ const schema = Sequelize => ({
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('feature', schema(Sequelize))
-      .then(_ => queryInterface.addIndex('feature', ['mnemonic'], {
+      .then(_ => queryInterface.addIndex('feature', ['name'], {
         indexType: 'hash',
-        name: 'feature_mnemonic_idx',
+        name: 'feature_name_idx',
         indicesType: 'UNIQUE',
       }))
-      .then(_ => queryInterface.addIndex('feature', ['mnemonic'], {
-        name: 'feature_mnemonic_sort_idx',
+      .then(_ => queryInterface.addIndex('feature', ['name'], {
+        name: 'feature_name_sort_idx',
       }))
   },
   down: (queryInterface, _Sequelize) =>
-    queryInterface.removeIndex('feature', 'feature_mnemonic_idx')
-      .then(_ => queryInterface.removeIndex('featureflag', 'feature_mnemonic_sort_idx'))
+    queryInterface.removeIndex('feature', 'feature_name_idx')
+      .then(_ => queryInterface.removeIndex('feature', 'feature_name_sort_idx'))
       .then(_ => queryInterface.dropTable('feature')),
 }

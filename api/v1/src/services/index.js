@@ -1,38 +1,45 @@
-const R = require('ramda')
 const repository = require('../models/repositories')
+const handler = require('./handler')
 
-const create = R.when(
-  R.not,
-  repository.feature.add
-)
-
-const safeAuthor = author => author && ({ createdBy: author })
-
-const listFeatures = ({ author, enabled = true, page = 0, pageSize = 10 }) => {
+const list = repo => ({ page = 0, pageSize = 10, ...where }) => {
   const offset = page * pageSize
   const limit = pageSize
-  const where = { enabled, ...safeAuthor(author) }
-  return repository.feature.list({where, limit, offset})
+  return repo.list({where, limit, offset})
 }
 
-const findFeature = (mnemonic, { author, enabled = true }) =>
-  repository.feature.findOne(mnemonic, { enabled, ...safeAuthor(author) })
+const add = repo => item =>
+  repo.findOne(item.name)
+    .then(() => repo.update((item.name, { ...item })))
+    .catch(() => repo.add(item))
 
-const update = repo => (mnemonic, args) => repo.feature.findOne(mnemonic, args)
+const feature = {
+  list: list(repository.feature),
+  findOne: repository.feature.findOne,
+  update: repository.feature.update,
+  add: add(repository.feature),
+  disable: repository.feature.disable,
+  enable: repository.feature.enable,
+}
 
-const updateFeature = update(repository.feature)
+const beta = {
+  list: list(repository.beta),
+  findOne: repository.beta.findOne,
+  add: add(repository.beta),
+  disable: repository.beta.disable,
+  enable: repository.beta.enable,
+}
 
-const addFeature = feature =>
-  repository.feature.findOne(feature.mnemonic)
-    .then(() => updateFeature(feature.mnemonic, { ...feature }))
-    .catch(create)
-
-const updateFeatureFlag = update(repository.feature)
+const tag = {
+  list: list(repository.tag),
+  findOne: repository.tag.findOne,
+  add: repository.tag.addFeatureTag,
+  disable: repository.tag.disable,
+  enable: repository.tag.enable,
+}
 
 module.exports = {
-  listFeatures,
-  findFeature,
-  updateFeature,
-  addFeature,
-  updateFeatureFlag,
+  feature,
+  tag,
+  beta,
+  evaluate: handler.handle,
 }

@@ -2,21 +2,21 @@ const uuid = require('uuid').v4
 const { TYPES } = require('../../src/models/feature-types')
 
 const features = [
-  { mnemonic: 0, id: uuid(), feature: 'banana bounced 100%', enabled: true, type: TYPES.BOUNCE, range: 1 },
-  { mnemonic: 1, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 0.1 },
+  { mnemonic: 0, id: uuid(), feature: 'banana bounced 100%', enabled: true, type: TYPES.BOUNCE, range: 100 },
+  { mnemonic: 1, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 10 },
   { mnemonic: 2, id: uuid(), feature: 'banana sample', enabled: true, type: TYPES.SAMPLE },
   { mnemonic: 3, id: uuid(), feature: 'banana bounced 0%', enabled: true, type: TYPES.BOUNCE, range: 0 },
-  { mnemonic: 4, id: uuid(), feature: 'banana bounced 10%', enabled: true, type: TYPES.BOUNCE, range: 0.1 },
-  { mnemonic: 5, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 0.9 },
-  { mnemonic: 6, id: uuid(), feature: 'banana sample 100%', enabled: true, type: TYPES.SAMPLE, range: 1 },
-  { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: TYPES.SAMPLE, range: 1 },
-  { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: TYPES.RANDOM, range: 1 },
-  { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: TYPES.BOUNCE, range: 1 },
-  { mnemonic: 10, id: uuid(), feature: 'noone banana', enabled: true, type: TYPES.NO_ONE, range: 1 },
-  { mnemonic: 11, id: uuid(), feature: 'everyone banana 100%', enabled: true, type: TYPES.EVERYONE, range: 1 },
-  { mnemonic: 12, id: uuid(), feature: 'disabled everyone banana 100%', enabled: false, type: TYPES.EVERYONE, range: 1 },
-  { mnemonic: 13, id: uuid(), feature: 'beta banana 100%', enabled: true, type: TYPES.BETA, range: 1 },
-  { mnemonic: 14, id: uuid(), feature: 'disabled beta banana 100%', enabled: false, type: TYPES.BETA, range: 1 },
+  { mnemonic: 4, id: uuid(), feature: 'banana bounced 10%', enabled: true, type: TYPES.BOUNCE, range: 10 },
+  { mnemonic: 5, id: uuid(), feature: 'banana random', enabled: true, type: TYPES.RANDOM, range: 90 },
+  { mnemonic: 6, id: uuid(), feature: 'banana sample 100%', enabled: true, type: TYPES.SAMPLE, range: 100 },
+  { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: TYPES.SAMPLE, range: 100 },
+  { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: TYPES.RANDOM, range: 100 },
+  { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: TYPES.BOUNCE, range: 100 },
+  { mnemonic: 10, id: uuid(), feature: 'noone banana', enabled: true, type: TYPES.NO_ONE, range: 100 },
+  { mnemonic: 11, id: uuid(), feature: 'everyone banana 100%', enabled: true, type: TYPES.EVERYONE, range: 100 },
+  { mnemonic: 12, id: uuid(), feature: 'disabled everyone banana 100%', enabled: false, type: TYPES.EVERYONE, range: 100 },
+  { mnemonic: 13, id: uuid(), feature: 'beta banana 100%', enabled: true, type: TYPES.BETA, range: 100 },
+  { mnemonic: 14, id: uuid(), feature: 'disabled beta banana 100%', enabled: false, type: TYPES.BETA, range: 100 },
 ]
 
 const users = [
@@ -76,7 +76,7 @@ const needMoreUsers = async (featured, feature, userCount) => {
     featured,
     range: feature.range,
     userCount,
-    needMore: featured < feature.range * userCount,
+    needMore: featured < (feature.range / 100) * userCount,
   }
 }
 
@@ -144,7 +144,7 @@ const betaEngine = async ({ user, feature }) => {
 
 const defaultBounce = () => Math.random() * 100
 
-const bounceLimit = bounce => feature => bounce <= (feature.range * 100)
+const bounceLimit = bounce => feature => bounce <= feature.range
 
 const bouncedEngine = async ({ feature, bounce = defaultBounce() }) => {
   return service.findFeature(feature)

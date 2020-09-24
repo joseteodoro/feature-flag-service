@@ -1,7 +1,6 @@
 const defaultSchemaOptions = require('../../../../../config').database.schemas.options
 const { connection, Sequelize } = require('../../../../../db')
 
-const TYPES = require('../feature-types')
 const helpers = require('./helpers')
 
 const schema = {
@@ -10,25 +9,14 @@ const schema = {
     primaryKey: true,
     type: Sequelize.UUID,
   },
-  feature: {
+  name: {
     type: Sequelize.STRING,
     allowNull: false,
   },
-  enabled: {
+  beta: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: false,
-  },
-  type: {
-    type: Sequelize.ENUM,
-    values: Object.values(TYPES),
-    allowNull: false,
-    defaultValue: TYPES.NO_ONE,
-  },
-  range: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
   },
   createdAt: {
     type: Sequelize.DATE,
@@ -42,8 +30,8 @@ const schema = {
 
 const options = {
   ...defaultSchemaOptions,
-  tableName: 'feature',
-  comment: `features`,
+  tableName: 'user',
+  comment: `users`,
 }
 
-module.exports = helpers.model(connection, 'Feature', schema, options)
+module.exports = helpers.model(connection, 'Users', schema, options)

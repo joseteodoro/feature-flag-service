@@ -1,48 +1,56 @@
+const R = require('ramda')
 const common = require('./common')
-
-const { Feature, FeatureFlag } = require('../entities')
+const TYPES = require('../feature-types')
+const { Feature, FeatureTag, Beta } = require('../entities')
 
 const loadFeatureModel = () => Promise.resolve(Feature())
 
-const loadFeatureFlagModel = () => Promise.resolve(FeatureFlag())
+const loadFeatureTagModel = () => Promise.resolve(FeatureTag())
 
-const feature = {
-  bulkAdd: common.bulkAdd(loadFeatureModel),
-  add: common.add(loadFeatureModel),
-  findOne: common.findOne(loadFeatureModel),
-  load: common.load(loadFeatureModel),
-  list: common.list(loadFeatureModel),
-  update: common.update(loadFeatureModel),
-}
+const loadBetaModel = () => Promise.resolve(Beta())
 
-const addFFWithDependency = (ff, f) => {
-  ff.feature = f
-  return FeatureFlag.create(ff)
-}
+const addFeature = common.add(loadFeatureModel)
 
-const addFeatureFlag = ({ feature, ...rest }, { cascade = true }) =>
-  common.findOne(loadFeatureFlagModel)
-    .catch(() =>  feature.findOne(feature)
-      .then(f => addFFWithDependency(rest, f))
-      .catch(error => {
-        return cascade
-          ? feature.add( add feature aqui e volta com a entidade pra salvar ff)
-          : Promise.reject(error)
-      })
-    )
+const findFeature = common.findOne(loadFeatureModel)
 
+const findTag = ({feature, name}) => common.findOne(loadFeatureTagModel)(name, { feature })
 
+const addTag = ({feature, name}) => () => findTag({feature, name})
+  .catch(() => common.add(loadFeatureTagModel)({
+    feature,
+    name,
+    enabled: true,
+  }))
 
-const featureFlag = {
-  bulkAdd: common.bulkAdd(loadFeatureFlagModel),
-  add: common.add(loadFeatureFlagModel),
-  findOne: common.findOne(loadFeatureFlagModel),
-  load: common.load(loadFeatureFlagModel),
-  list: common.list(loadFeatureFlagModel),
-  update: common.update(loadFeatureFlagModel),
-}
+const addFeatureTag = ({feature, tag}) => findFeature(feature)
+  .catch(() => addFeature({
+    name: feature,
+    enabled: true,
+    allow: TYPES.SOME_ONE,
+  }))
+  .then(addTag({feature, tag}))
 
 module.exports = {
-  feature,
-  featureFlag,
+  feature: {
+    add: addFeature,
+    findOne: findFeature,
+    list: common.list(loadFeatureModel),
+    update: common.update(loadFeatureModel),
+    disable: R.pipe(findFeature, R.then(common.disable)),
+    enable: R.pipe(findFeature, R.then(common.enable)),
+  },
+  tag: {
+    add: addFeatureTag,
+    findOne: findTag,
+    list: common.list(loadFeatureTagModel),
+    disable: R.pipe(findTag, R.then(common.disable)),
+    enable: R.pipe(findTag, R.then(common.enable)),
+  },
+  beta: {
+    add: common.add(loadBetaModel),
+    findOne: common.findOne(loadBetaModel),
+    list: common.list(loadBetaModel),
+    disable: R.pipe(common.findOne(loadBetaModel), R.then(common.disable)),
+    enable: R.pipe(common.findOne(loadBetaModel), R.then(common.enable)),
+  },
 }

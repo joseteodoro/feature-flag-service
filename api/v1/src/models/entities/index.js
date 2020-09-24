@@ -1,7 +1,9 @@
 const Feature = require('./feature')
-const FeatureFlag = require('./feature-flag')
+const Featured = require('./featured')
+const Users = require('./user')
 
 module.exports = {
   Feature,
-  FeatureFlag,
+  Featured,
+  Users,
 }

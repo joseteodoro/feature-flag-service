@@ -1,6 +1,6 @@
 const error = require('../../src/middlewares/error')
 
-describe.only(`Middleware error test`, () => {
+describe.skip(`Middleware error test`, () => {
   context('Some some unexpected error occurs', () => {
     it(`Context must contains error body`, async () => {
       const ctx = {}

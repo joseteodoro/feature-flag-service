@@ -1,9 +1,10 @@
+const R = require('ramda')
 const sinon = require('sinon')
-const { featureFlag: repository } = require('../../../src/models/repositories')
-const models = require('../../../src/models')
+const uuid = require('uuid').v4
+const { tag: repository } = require('../../../src/models/repositories')
 const { expect } = require('chai')
 
-describe.only(`feature-flag suite`, () => {
+describe(`feature-tag suite`, () => {
   let sandbox
 
   beforeEach(() => {
@@ -14,8 +15,13 @@ describe.only(`feature-flag suite`, () => {
   })
   context('When connected', () => {
     it(`should load`, async () => {
-      const id = 1
-      const record = await repository.load(id)
+      const ff = {
+        feature: uuid(),
+        name: uuid(),
+      }
+      await repository.add(ff)
+      const loaded = await repository.findOne(R.pick(['name', 'feature']))
+      const record = await repository.load(loaded.id)
       expect(record).to.be.null
     })
     it(`should list feature-flags properly`, async () => {
@@ -23,12 +29,8 @@ describe.only(`feature-flag suite`, () => {
       expect(records).to.be.deep.equal([])
     })
     it(`should find one feature-flag properly`, async () => {
-
-      const modelSpy = sandbox.spy(models, 'buildMnemonic')
-      const user = 'banana'
       const feature = 'banana'
-      await repository.findBy({ user, feature }, { enabled: false })
-      expect(modelSpy).to.have.been.calledWith({ feature: 'banana', type: undefined, user: 'banana' })
+      await repository.list({ feature, enabled: false })
     })
   })
 })

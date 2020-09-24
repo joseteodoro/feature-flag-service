@@ -14,25 +14,40 @@ const bulkAdd = loadModel => records => loadModel()
 const add = loadModel => record => loadModel()
   .then(model => model.create(record))
 
-const findOne = loadModel => (mnemonic, additionalOpts = {}) => loadModel()
-  .then(model => model.findOne({ where: { mnemonic, ...additionalOpts } }))
+const findOne = loadModel => ({ name }, additionalOpts = {}) => loadModel()
+  .then(model => model.findOne({ where: { name, ...additionalOpts } }))
   .then(notFound)
 
 const load = loadModel => id => loadModel()
   .then(model => model.findOne({ where: { id } }))
   .then(notFound)
 
-const list = loadModel => query => loadModel()
-  .then(model => model.findAll(query))
+const list = loadModel => where => loadModel()
+  .then(model => model.findAll({ where }))
 
-const update = loadModel => (mnemonic, { enabled, author }) => loadModel()
-  .then(model => model.findOne({ where: { mnemonic } }))
+const updateReducer = source => (acc, key) => {
+  acc[key] = source[key]
+}
+
+// TODO can I pass feature name here to all entities?
+// even those one who doesnt have the feature name inside?
+const update = loadModel => ({ name }, changes = {}) => loadModel()
+  .then(model => model.findOne({ where: { name } }))
   .then(notFound)
   .then(loaded => {
-    loaded.enabled = enabled
-    loaded.updatedBy = author
-    return loaded.save()
+    const changed = Object.keys(changes).reduce(updateReducer(changes), loaded)
+    return changed.save()
   })
+
+const disable = entity => {
+  entity.enabled = false
+  return entity.save()
+}
+
+const enable = entity => {
+  entity.enabled = true
+  return entity.save()
+}
 
 module.exports = {
   bulkAdd,
@@ -41,4 +56,6 @@ module.exports = {
   load,
   add,
   update,
+  disable,
+  enable,
 }
