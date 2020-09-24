@@ -129,10 +129,8 @@ const engineByFeature = (ft) => service.findFeature(ft)
 
 const invoke = args => fn => fn(args)
 
-const engine = ({ feature, bounce, user }) => {
-  return engineByFeature(feature)
-    .then(invoke({ feature, bounce, user }))
-}
+const engine = ({ feature, bounce, user }) => engineByFeature(feature)
+  .then(invoke({ feature, bounce, user }))
 
 describe.only('verify feature-flags', () => {
   describe('for random ones', () => {
