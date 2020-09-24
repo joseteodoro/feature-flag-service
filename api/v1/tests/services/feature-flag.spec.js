@@ -81,6 +81,8 @@ const shouldAddMore = async (ft) => {
 
 const rand = async ({ range }) => Math.random() <= range
 
+const truthy = () => true
+
 const randomAdd = (user, feature) => async (needMore) => {
   if (!needMore.needMore) {
     return false
@@ -89,7 +91,7 @@ const randomAdd = (user, feature) => async (needMore) => {
     .then(loadedUser => {
       if (!loadedUser.beta && !rand(needMore)) return false
       return service.addFeatured(user, feature)
-        .then(() => true)
+        .then(truthy)
     })
 }
 
