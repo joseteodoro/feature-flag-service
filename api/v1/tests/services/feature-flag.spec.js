@@ -83,16 +83,18 @@ const rand = async ({ range }) => Math.random() <= range
 
 const truthy = () => true
 
+const addBetaOrRand = (user, feature, needMore) => loadedUser => {
+  if (!loadedUser.beta && !rand(needMore)) return false
+  return service.addFeatured(user, feature)
+    .then(truthy)
+}
+
 const randomAdd = (user, feature) => async (needMore) => {
   if (!needMore.needMore) {
     return false
   }
   return service.findUser(user)
-    .then(loadedUser => {
-      if (!loadedUser.beta && !rand(needMore)) return false
-      return service.addFeatured(user, feature)
-        .then(truthy)
-    })
+    .then(addBetaOrRand(user, feature, needMore))
 }
 
 const randomEngine = async ({ user, feature }) => {
