@@ -226,7 +226,7 @@ describe.only('verify feature-flags', () => {
       const { id: feature } = db.features[4]
       expect(await engine({ feature, bounce: 5 })).to.be.true
     })
-    it('should return true if bounce 10% and bounced greater than that', async () => {
+    it('should return false if bounce 10% and bounced greater than that', async () => {
       const { id: feature } = db.features[4]
       expect(await engine({ feature, bounce: 90 })).to.be.false
     })
