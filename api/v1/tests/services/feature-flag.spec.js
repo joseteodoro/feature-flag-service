@@ -106,11 +106,11 @@ const sampleEngine = async ({ user, feature }) => {
 
 const defaultBounce = () => Math.random() * 100
 
+const bounceLimit = bounce => feature => bounce <= (feature.range * 100)
+
 const bouncedEngine = async ({ feature, bounce = defaultBounce() }) => {
   return service.findFeature(feature)
-    .then(loaded => {
-      return bounce <= (loaded.range * 100)
-    })
+    .then(bounceLimit(bounce))
 }
 
 const engines = {
@@ -119,10 +119,10 @@ const engines = {
   [FEATURE_TYPES.SAMPLE]: sampleEngine,
 }
 
-const engineByFeature = (ft) => {
-  return service.findFeature(ft)
-    .then(feature => engines[feature.type] || bouncedEngine)
-}
+const engineByType = ({ type }) => engines[type] || bouncedEngine
+
+const engineByFeature = (ft) => service.findFeature(ft)
+  .then(engineByType)
 
 const engine = ({ feature, bounce, user }) => {
   return engineByFeature(feature)
