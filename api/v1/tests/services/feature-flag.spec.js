@@ -4,6 +4,9 @@ const FEATURE_TYPES = {
   BOUNCE: 'BOUNCE',
   SAMPLE: 'SAMPLE',
   RANDOM: 'RANDOM',
+  EVERYONE: 'EVERYONE',
+  BETA: 'BETA',
+  NO_ONE: 'NO_ONE',
 }
 
 const features = [
@@ -17,6 +20,11 @@ const features = [
   { mnemonic: 7, id: uuid(), feature: 'disabled banana sample 100%', enabled: false, type: FEATURE_TYPES.SAMPLE, range: 1 },
   { mnemonic: 8, id: uuid(), feature: 'disabled banana random', enabled: false, type: FEATURE_TYPES.RANDOM, range: 1 },
   { mnemonic: 9, id: uuid(), feature: 'disabled banana bounced 100%', enabled: false, type: FEATURE_TYPES.BOUNCE, range: 1 },
+  { mnemonic: 10, id: uuid(), feature: 'noone banana', enabled: true, type: FEATURE_TYPES.NO_ONE, range: 1 },
+  { mnemonic: 11, id: uuid(), feature: 'everyone banana 100%', enabled: true, type: FEATURE_TYPES.EVERYONE, range: 1 },
+  { mnemonic: 12, id: uuid(), feature: 'disabled everyone banana 100%', enabled: false, type: FEATURE_TYPES.EVERYONE, range: 1 },
+  { mnemonic: 13, id: uuid(), feature: 'beta banana 100%', enabled: true, type: FEATURE_TYPES.BETA, range: 1 },
+  { mnemonic: 14, id: uuid(), feature: 'disabled beta banana 100%', enabled: false, type: FEATURE_TYPES.BETA, range: 1 },
 ]
 
 const users = [
@@ -97,7 +105,7 @@ const shouldAddMore = async (ft) => {
 
 const rand = async ({ range }) => Math.random() <= range
 
-const truthy = () => true
+const truthy = async () => true
 
 const addBetaOrRand = (user, feature, needMore) => loadedUser => {
   if (!loadedUser.beta && !rand(needMore)) return false
@@ -129,6 +137,19 @@ const sampleEngine = async ({ user, feature }) => {
     .then(featured => featured && isFeaturedEnabled(user, feature))
 }
 
+const addIfBeta = (user, feature) => featured => {
+  const forceBetaUsers = { range: -1, needMore: true }
+  return featured
+    ? isFeaturedEnabled(user, feature)
+    : service.findUser(user)
+      .then(addBetaOrRand(user, feature, forceBetaUsers))
+}
+
+const betaEngine = async ({ user, feature }) => {
+  return service.isFeatured(user, feature)
+    .then(addIfBeta(user, feature))
+}
+
 const defaultBounce = () => Math.random() * 100
 
 const bounceLimit = bounce => feature => bounce <= (feature.range * 100)
@@ -138,13 +159,16 @@ const bouncedEngine = async ({ feature, bounce = defaultBounce() }) => {
     .then(bounceLimit(bounce))
 }
 
+const falsy = async () => false
+
 const engines = {
   [FEATURE_TYPES.BOUNCE]: bouncedEngine,
   [FEATURE_TYPES.RANDOM]: randomEngine,
   [FEATURE_TYPES.SAMPLE]: sampleEngine,
+  [FEATURE_TYPES.EVERYONE]: truthy,
+  [FEATURE_TYPES.BETA]: betaEngine,
+  [FEATURE_TYPES.NO_ONE]: falsy,
 }
-
-const falsy = async () => false
 
 const engineByType = ({ type, enabled }) => {
   if (enabled) {
@@ -233,6 +257,37 @@ describe.only('verify feature-flags', () => {
     it('should return false if bounced feature disabled', async () => {
       const { id: user } = db.users[0]
       const { id: feature } = db.features[9]
+      expect(await engine({ feature, user })).to.be.false
+    })
+  })
+  describe('for noone ones', () => {
+    it('should return false if noone feature', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[10]
+      expect(await engine({ feature, user })).to.be.false
+    })
+  })
+  describe('for everyone ones', () => {
+    it('should return true for everyone feature', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[11]
+      expect(await engine({ feature, user })).to.be.true
+    })
+    it('should return false if everyone feature disabled', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[12]
+      expect(await engine({ feature, user })).to.be.false
+    })
+  })
+  describe('for beta ones', () => {
+    it('should return true if beta feature', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[13]
+      expect(await engine({ feature, user })).to.be.true
+    })
+    it('should return false if beta feature disabled', async () => {
+      const { id: user } = db.users[0]
+      const { id: feature } = db.features[14]
       expect(await engine({ feature, user })).to.be.false
     })
   })
