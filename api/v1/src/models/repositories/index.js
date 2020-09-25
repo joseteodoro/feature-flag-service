@@ -1,9 +1,11 @@
 const uuid = require('uuid').v4
 const { Feature, Featured, Users } = require('../entities')
 
-const countFeatured = async (ft) => db.featured.filter(({ feature }) => feature === ft).length
+const countFeatured = async (feature) => Featured()
+  .then(model => model.count({ where: { feature } }))
 
-const countUsers = async () => db.users.length
+const countUsers = async () => Users()
+  .then(model => model.count())
 
 const addFeatured = async (user, feature) => Featured()
   .then(model => model.create({

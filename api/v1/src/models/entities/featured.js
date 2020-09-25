@@ -17,6 +17,11 @@ const schema = {
     allowNull: false,
     type: Sequelize.UUID,
   },
+  enabled: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
   createdAt: {
     type: Sequelize.DATE,
     field: 'created_at',

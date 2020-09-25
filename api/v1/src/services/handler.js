@@ -1,57 +1,110 @@
-const R = require('ramda')
-const TYPES = require('../models/feature-types')
-const repo = require('../models/repositories')
+const { TYPES } = require('../../src/models/feature-types')
+const db = require('../models/repositories')
 
-const handleFoundBeta = R.allPass([
-  R.complement(R.isNil),
-  R.complement(R.isEmpty),
-  ({ enabled }) => enabled,
-])
-
-const shouldAddTag = feature => repo.tag.list(feature)
-  .then(tags => repo.feature.findOne(feature)
-    .then(loaded => tags.length < loaded.span)
-  )
-  .catch(() => false)
-
-const handleBeta = (_, tag) => repo.beta.findOne(tag)
-  .catch(() => ({})) //by pass with empty
-  .then(handleFoundBeta)
-
-const random = feature => repo.feature.findOne(feature)
-  .then(loaded => Math.random() < (loaded.span / 100))
-  .catch(() => false)
-
-const tryEnableTag = (feature, tag) => enabled => !enabled
-  ? false
-  : shouldAddTag(feature)
-    .then(should => should ? repo.tag.add({ name: tag, feature, enabled: true }) : false)
-
-const handleNonExistentFeatureTag = (feature, tag) => () => random(feature, tag)
-  .then(tryEnableTag(feature, tag))
-
-const randomTag = (feature, tag) => repo.tag.findOne(feature, tag)
-  .then(R.prop('enabled'))
-  .catch(handleNonExistentFeatureTag(feature, tag))
-
-const handleRandom = (feature, tag) => R.isNill(tag)
-  ? random(feature)
-  : randomTag(feature, tag)
-
-const findTag = (feature, tag) => repo.tag.findOne(feature, tag)
-  .then(R.prop('enabled'))
-  .catch(() => false)
-
-const handlers = {
-  [TYPES.NO_ONE]: () => false,
-  [TYPES.EVERYONE]: () => true,
-  [TYPES.SOME_ONE]: findTag,
-  [TYPES.BETA]: handleBeta,
-  [TYPES.RANDOM]: handleRandom,
+const needMoreUsers = async (featured, feature, userCount) => {
+  return {
+    featured,
+    range: feature.range,
+    userCount,
+    needMore: featured < (feature.range / 100) * userCount,
+  }
 }
 
-const handle = ({ feature, tag }) => repo.feature.findOne(feature)
-  .catch(() => ({ type: TYPES.NO_ONE }))
-  .then(loaded => handlers[loaded.type](feature, tag))
+const hydratateFeatureData = (ft) => {
+  return Promise.all([
+    db.countUsers(),
+    db.findFeature(ft),
+    db.countFeatured(ft),
+  ])
+}
 
-module.exports = { handle }
+const shouldAddMore = async (ft) => {
+  return hydratateFeatureData(ft)
+    .then(([userCount, feature, featured]) => {
+      return needMoreUsers(featured, feature, userCount)
+    })
+}
+
+const rand = async ({ range }) => Math.random() <= range
+
+const truthy = async () => true
+
+const addBetaOrRand = (user, feature, needMore) => loadedUser => {
+  if (!loadedUser.beta && !rand(needMore)) return false
+  return db.addFeatured(user, feature)
+    .then(truthy)
+}
+
+const randomAdd = (user, feature) => async (needMore) => {
+  return needMore.needMore
+    ? db.findUser(user)
+      .then(addBetaOrRand(user, feature, needMore))
+    : false
+}
+
+const addIfNeeded = (user, feature) => featured => {
+  return featured
+    ? db.isFeaturedEnabled(user, feature)
+    : shouldAddMore(feature)
+      .then(randomAdd(user, feature))
+}
+
+const randomEngine = async ({ user, feature }) => {
+  return db.isFeatured(user, feature)
+    .then(addIfNeeded(user, feature))
+}
+
+const sampleEngine = async ({ user, feature }) => {
+  return db.isFeatured(user, feature)
+    .then(featured => featured && db.isFeaturedEnabled(user, feature))
+}
+
+const addIfBeta = (user, feature) => featured => {
+  const forceBetaUsers = { range: -1, needMore: true }
+  return featured
+    ? db.isFeaturedEnabled(user, feature)
+    : db.findUser(user)
+      .then(addBetaOrRand(user, feature, forceBetaUsers))
+}
+
+const betaEngine = async ({ user, feature }) => {
+  return db.isFeatured(user, feature)
+    .then(addIfBeta(user, feature))
+}
+
+const defaultBounce = () => Math.random() * 100
+
+const bounceLimit = bounce => feature => bounce <= feature.range
+
+const bouncedEngine = async ({ feature, bounce = defaultBounce() }) => {
+  return db.findFeature(feature)
+    .then(bounceLimit(bounce))
+}
+
+const falsy = async () => false
+
+const engines = {
+  [TYPES.BOUNCE]: bouncedEngine,
+  [TYPES.RANDOM]: randomEngine,
+  [TYPES.SAMPLE]: sampleEngine,
+  [TYPES.EVERYONE]: truthy,
+  [TYPES.BETA]: betaEngine,
+  [TYPES.NO_ONE]: falsy,
+}
+
+const engineByType = ({ type, enabled }) => {
+  if (enabled) {
+    return engines[type] || bouncedEngine
+  }
+  return falsy
+}
+
+const engineByFeature = (ft) => db.findFeature(ft)
+  .then(engineByType)
+
+const invoke = args => fn => fn(args)
+
+const engine = ({ feature, bounce, user }) => engineByFeature(feature)
+  .then(invoke({ feature, bounce, user }))
+
+module.exports = { engine }

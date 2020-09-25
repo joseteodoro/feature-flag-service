@@ -2,11 +2,11 @@ const TYPES = require('../../api/v1/src/models/feature-types')
 
 const schema = Sequelize => ({
   id: {
-    type: Sequelize.BIGINT,
+    allowNull: false,
     primaryKey: true,
-    autoIncrement: true,
+    type: Sequelize.UUID,
   },
-  name: {
+  feature: {
     type: Sequelize.STRING,
     allowNull: false,
   },
@@ -15,12 +15,13 @@ const schema = Sequelize => ({
     allowNull: false,
     defaultValue: false,
   },
-  allow: {
+  type: {
     type: Sequelize.ENUM,
     values: Object.values(TYPES),
     allowNull: false,
+    defaultValue: TYPES.NO_ONE,
   },
-  span: {
+  range: {
     type: Sequelize.INTEGER,
     allowNull: false,
     defaultValue: 0,
@@ -38,17 +39,13 @@ const schema = Sequelize => ({
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('feature', schema(Sequelize))
-      .then(_ => queryInterface.addIndex('feature', ['name'], {
+      .then(_ => queryInterface.addIndex('feature', ['feature'], {
         indexType: 'hash',
-        name: 'feature_name_idx',
+        name: 'feature_feature_idx',
         indicesType: 'UNIQUE',
-      }))
-      .then(_ => queryInterface.addIndex('feature', ['name'], {
-        name: 'feature_name_sort_idx',
       }))
   },
   down: (queryInterface, _Sequelize) =>
-    queryInterface.removeIndex('feature', 'feature_name_idx')
-      .then(_ => queryInterface.removeIndex('feature', 'feature_name_sort_idx'))
+    queryInterface.removeIndex('feature', 'feature_feature_idx')
       .then(_ => queryInterface.dropTable('feature')),
 }
