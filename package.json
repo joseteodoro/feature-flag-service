@@ -48,6 +48,7 @@
     "koa-convert": "^1.2.0",
     "koa-pino-logger": "^3.0.0",
     "koa-router": "^7.4.0",
+    "p-map": "^4.0.0",
     "pg": "^7.12.1",
     "pg-hstore": "^2.3.3",
     "pino": "^5.8.0",
