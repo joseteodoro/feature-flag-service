@@ -23,7 +23,7 @@ const users = [
   { id: uuid(), name: 'lab do joaquim', beta: true },
   { id: uuid(), name: 'lab do bacana', beta: true },
   { id: uuid(), name: 'lab do bambu', beta: true },
-  { id: uuid(), name: 'lab do disabled', beta: true },
+  { id: uuid(), name: 'lab do disabled', beta: false },
 ]
 
 const db = {

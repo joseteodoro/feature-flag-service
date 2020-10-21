@@ -110,6 +110,11 @@ describe.only('verify feature-flags', () => {
       const { id: feature } = fakedb.db.features[13]
       expect(await service.engine({ feature, user })).to.be.true
     })
+    it('should return false if beta feature and not beta user', async () => {
+      const { id: user } = fakedb.db.users[3]
+      const { id: feature } = fakedb.db.features[13]
+      expect(await service.engine({ feature, user })).to.be.false
+    })
     it('should return false if beta feature disabled', async () => {
       const { id: user } = fakedb.db.users[0]
       const { id: feature } = fakedb.db.features[14]

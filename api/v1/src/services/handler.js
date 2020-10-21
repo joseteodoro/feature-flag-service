@@ -29,10 +29,17 @@ const rand = async ({ range }) => Math.random() <= range
 
 const truthy = async () => true
 
+const addFeatured = (user, feature) => db.addFeatured(user, feature)
+  .then(truthy)
+
 const addBetaOrRand = (user, feature, needMore) => loadedUser => {
   if (!loadedUser.beta && !rand(needMore)) return false
-  return db.addFeatured(user, feature)
-    .then(truthy)
+  return addFeatured(user, feature)
+}
+
+const addBeta = (user, feature) => loadedUser => {
+  if (!loadedUser.beta) return false
+  return addFeatured(user, feature)
 }
 
 const randomAdd = (user, feature) => async (needMore) => {
@@ -60,11 +67,10 @@ const sampleEngine = async ({ user, feature }) => {
 }
 
 const addIfBeta = (user, feature) => featured => {
-  const forceBetaUsers = { range: -1, needMore: true }
   return featured
     ? db.isFeaturedEnabled(user, feature)
     : db.findUser(user)
-      .then(addBetaOrRand(user, feature, forceBetaUsers))
+      .then(addBeta(user, feature))
 }
 
 const betaEngine = async ({ user, feature }) => {
