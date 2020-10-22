@@ -3,16 +3,17 @@ const Router = require('koa-router')
 // middlewares
 const validator = require('koa-async-validator')
 const customValidators = require('./utils/validators')
-const validate = require('./middlewares/validate')
+// const validate = require('./middlewares/validate')
 const error = require('./middlewares/error')
 
 // schemas
-const schemas = require('./models/request-schemas')
+// const schemas = require('./models/request-schemas')
 
 // handlers
+const evaluation = require('./handlers/evaluation')
+const users = require('./handlers/users')
 const features = require('./handlers/features')
-const tags = require('./handlers/tag')
-const beta = require('./handlers/beta')
+const flagged = require('./handlers/featured')
 
 const router = new Router()
 
@@ -25,25 +26,27 @@ router.use(validator({ customValidators }))
 // router.put('/identifiers/:mpi', validate(schemas.identifierAddToPerson), identifier.addIdentifiers)
 // router.get('/mpis', validate(schemas.listAllMpis), mpi.findAll)
 
+router.get('/evaluate', evaluation.evaluate)
+router.get('/evaluate/:feature', evaluation.evaluate)
+router.get('/evaluate/:feature/:user', evaluation.evaluate)
+
 router.post('/features', features.add)
 router.get('/features', features.list)
-router.get('/features/:name', features.findOne)
-router.put('/features/:name', features.update)
-router.get('/features/:name/enable', features.enable)
-router.get('/features/:name/disable', features.disable)
+router.get('/features/:feature', features.findOne)
+router.put('/features/:feature', features.update)
+router.put('/features/:feature/enable', features.enable)
+router.put('/features/:feature/disable', features.disable)
 
-router.post('/tags', tags.add)
-router.get('/tags', tags.list)
-router.get('/tags/:feature/:name', tags.findOne)
-router.post('/tags/:feature/:name/enable', tags.enable)
-router.post('/tags/:feature/:name/disable', tags.disable)
-router.post('/features/:feature/:name/enable', tags.enable)
-router.post('/features/:feature/:name/disable', tags.disable)
+router.post('/flagged/:feature/:user', flagged.add)
+router.get('/flagged/:feature/users', flagged.listUsers)
+router.get('/flagged/:user/features', flagged.listFeatures)
+router.get('/flagged/:feature/:user', flagged.findOne)
+router.put('/flagged/:feature/:user', flagged.update)
 
-router.post('/beta', beta.add)
-router.get('/beta', beta.list)
-router.get('/beta/:name', tags.findOne)
-router.post('/beta/:name/enable', beta.enable)
-router.post('/beta/:name/disable', beta.disable)
+router.post('/users', users.add)
+router.get('/users', users.list)
+router.get('/users/:user', users.findOne)
+router.get('/users/:user/features', users.listEnabledFeatures)
+router.put('/users/:user', users.update)
 
 module.exports = router
