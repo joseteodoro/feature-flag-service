@@ -27,13 +27,21 @@ class ManagedError extends Error {
    * @param {string} message error message
    * @see {@link utils/error:catalogue}
    */
-  constructor (code, message = '') {
+  constructor (code, message = '', { body = {}, status = 500 } = {}) {
     super(message || code)
     this._code = code
+    this._status = status
+    this._body = body
     Error.captureStackTrace(this, ManagedError)
   }
   get code () {
     return this._code
+  }
+  get status () {
+    return this._status
+  }
+  get body () {
+    return this._body
   }
 }
 

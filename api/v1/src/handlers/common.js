@@ -1,17 +1,26 @@
 const R = require('ramda')
 const { set } = require('../utils')
+const { ManagedError, response, catalogue } = require('../models/error')
 
-const handleNoContent = ctx => R.tap(
-  R.when(
-    R.not,
-    R.compose(set('status', ctx), R.always(204))
-  )
-)
+const output = ctx => ({ status, body }) => {
+  ctx.status = status
+  if (body) {
+    ctx.body = body
+  }
+}
 
-const findOne = service => ctx =>
-  service.findOne(ctx.params, ctx.request.query)
-    .then(handleNoContent(ctx))
-    .then(set('body', ctx))
+/* eslint-disable prefer-promise-reject-errors */
+const handleNotFound = body => body
+  ? Promise.resolve({ status: 200, body })
+  : Promise.reject(new ManagedError('not found', '', response[catalogue.NOT_FOUND]))
+
+const findOne = service => ctx => {
+  console.log({ params: ctx.params })
+  return service.findOne(ctx.params, ctx.request.query)
+    .then(handleNotFound)
+    .then(output(ctx))
+    .catch(output(ctx))
+}
 
 const list = service => ctx =>
   service.list(ctx.request.query)
@@ -24,17 +33,25 @@ const add = service => ctx =>
     .then(set('status', ctx))
 
 const update = service => ctx =>
-  service.update(ctx.params, ctx.request.body)
+  service.findOne(ctx.params, ctx.request.query)
+    .then(handleNotFound)
+    .then(_ => service.update(ctx.params, ctx.request.body))
     .then(R.always(201))
     .then(set('status', ctx))
+    .catch(output(ctx))
 
 const disable = service => ctx =>
-  service.disable(ctx.params, ctx.request.body)
+  service.findOne(ctx.params)
+    .then(handleNotFound)
+    .then(_ => service.disable(ctx.params))
     .then(R.always(201))
     .then(set('status', ctx))
+    .catch(output(ctx))
 
 const enable = service => ctx =>
-  service.enable(ctx.params, ctx.request.body)
+  service.findOne(ctx.params)
+    .then(handleNotFound(ctx))
+    .then(_ => service.enable(ctx.params))
     .then(R.always(201))
     .then(set('status', ctx))
 

@@ -1,21 +1,23 @@
+const db = require('../models/repositories/generic')
+const { Feature } = require('../models/entities')
 
+const findOne = db.findOne(Feature)
 
+const list = db.list(Feature)
 
+const add = db.add(Feature)
 
+const update = db.update(Feature)
 
+const enable = db.enable(Feature)
 
-router.post('/features', features.add)
-router.get('/features', features.list)
-router.get('/features/:feature', features.findOne)
-router.put('/features/:feature', features.update)
-router.put('/features/:feature/enable', features.enable)
-router.put('/features/:feature/disable', features.disable)
+const disable = db.disable(Feature)
 
 module.exports = {
-  add,
-  list,
   findOne,
+  list,
+  add,
   update,
   enable,
-  disable
+  disable,
 }
