@@ -1,3 +1,4 @@
+const uuid = require('uuid').v4
 const sinon = require('sinon')
 const createTestServer = require('../helpers/server')
 const { catalogue, response: errors } = require('../../src/models/error')
@@ -18,6 +19,19 @@ describe.only(`users endpoint suite`, () => {
     it(`Responds with 'resource not found' when finding unexistent user`, () => {
       return request.get(`/api/v1/users/notfound`)
         .expect(404, errors[catalogue.NOT_FOUND].body)
+    })
+  })
+  context('When posting an user', () => {
+    const name = uuid()
+    it(`Responds with 'created' when creating`, () => {
+      const user = {
+        name,
+      }
+      return request
+        .post(`/api/v1/users`)
+        .set('Content-Type', 'application/json')
+        .send(user)
+        .expect(201)
     })
   })
   // context('When given no registered feature', () => {
