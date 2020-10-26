@@ -17,8 +17,10 @@ const add = loader => async data => loader()
     id: uuid(),
   }))
 
-const list = loader => async query => loader()
-  .then(model => model.findAll(query))
+const list = loader => async query => {
+  return loader()
+    .then(model => model.findAll({where: {...query}}))
+}
 
 const traverseFields = (entity, data) => (_, key) => {
   entity[key] = data[key]

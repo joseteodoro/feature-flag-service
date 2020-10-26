@@ -49,7 +49,7 @@ router.put('/features/:feature/:user/disable', flagged.disable)
 router.post('/users', users.add)
 router.get('/users', users.list)
 router.get('/users/:name', users.findOne)
-router.get('/users/:name/features', users.listEnabledFeatures)
+router.get('/users/:user/features', users.listEnabledFeatures)
 router.put('/users/:name', users.update)
 
 module.exports = router

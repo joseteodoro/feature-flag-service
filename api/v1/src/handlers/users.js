@@ -12,9 +12,13 @@ const add = common.add(service)
 
 const update = common.update(service)
 
-const listEnabledFeatures = ctx => featured.listFeatures(ctx.params)
-  .then(R.always(200))
-  .then(set('status', ctx))
+const listEnabledFeatures = ctx => {
+  return featured.listFeatures(ctx.params)
+    .then(R.objOf('result'))
+    .then(set('body', ctx))
+    .then(R.always(200))
+    .then(set('status', ctx))
+}
 
 module.exports = {
   add,
