@@ -3,7 +3,10 @@ const { Feature } = require('../models/entities')
 
 const findOne = db.findOne(Feature)
 
-const list = db.list(Feature)
+const list = async ({enabled: bs, ...query}) => {
+  const enabled = (bs || 'true').toLowerCase() === 'true'
+  return db.list(Feature)({...query, enabled})
+}
 
 const add = db.add(Feature)
 

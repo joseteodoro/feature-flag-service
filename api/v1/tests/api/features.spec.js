@@ -1,12 +1,10 @@
+const uuid = require('uuid').v4
 const sinon = require('sinon')
 const createTestServer = require('../helpers/server')
 const { catalogue, response: errors } = require('../../src/models/error')
+const { TYPES } = require('../../src/models/feature-types')
 
-const API_VERSION = 'v1'
-
-const ENDPOINT = `/api/${API_VERSION}/features`
-
-describe.skip(`features endpoint suite`, () => {
+describe.only(`features endpoint suite`, () => {
   let sandbox, request
   beforeEach(async () => {
     request = await createTestServer()
@@ -17,33 +15,95 @@ describe.skip(`features endpoint suite`, () => {
   })
 
   context('When given an unregistered feature', () => {
-    it(`Responds with 'resource not found' when finding by name`, () => {
-      request.get(`${ENDPOINT}/notfound`)
-        .expect(200, errors[catalogue.NOT_FOUND].body)
+    it(`Responds with 'resource not found' when finding unexistent user`, () => {
+      return request.get(`/api/v1/features/notfound`)
+        .expect(404, errors[catalogue.NOT_FOUND].body)
     })
   })
-  context('When given no registered feature', () => {
-    it(`Responds with empty when listing by name`, () => {
-      request.get(`${ENDPOINT}?name=banana&enabled=false`)
-        .expect(200, { result: [] })
-    })
-  })
-  context('When creating a feature', () => {
-    it(`Responds with created`, async () => {
-      const feature = {
-        name: 'banana-phone',
+  context('When creating an user', () => {
+    const feature = uuid()
+
+    it(`Responds with 'created' when posting`, () => {
+      const data = {
+        feature,
         enabled: true,
-        author: 'ring ring ring',
+        type: TYPES.BOUNCE,
       }
-
-      await request
-        .post(`${ENDPOINT}`)
+      return request
+        .post(`/api/v1/features`)
         .set('Content-Type', 'application/json')
-        .send(feature)
+        .send(data)
         .expect(201)
-
-      return request.get(`${ENDPOINT}?name=${feature.name}`)
-        .expect(200)
     })
+    it(`Responds with features when looking for the feature just created`, () => {
+      return request
+        .get(`/api/v1/features/${feature}`)
+        .expect((res) => {
+          res.status.should.be.equal(200)
+          res.body.should.contain({ feature })
+        })
+    })
+    it(`Responds with features when listing`, () => {
+      return request
+        .get(`/api/v1/features?enabled=true`)
+        .expect((res) => {
+          res.status.should.be.equal(200)
+        })
+    })
+    it(`Responds with users when looking for the feature`, () => {
+      return request
+        .get(`/api/v1/features?feature=${feature}`)
+        .expect((res) => {
+          res.status.should.be.equal(200)
+          expect(Array.isArray(res.body.result)).to.be.true
+          expect(res.body.result.length).to.be.equal(1)
+        })
+    })
+    it(`Responds with no user when looking for the feature not match`, () => {
+      return request
+        .get(`/api/v1/features?feature=${feature}&enabled=false`)
+        .expect((res) => {
+          res.status.should.be.equal(200)
+          expect(Array.isArray(res.body.result)).to.be.true
+          expect(res.body.result.length).to.be.equal(0)
+        })
+    })
+    it(`Responds with success when putting`, () => {
+      const data = {
+        enabled: false,
+      }
+      return request
+        .put(`/api/v1/features/${feature}`)
+        .set('Content-Type', 'application/json')
+        .send(data)
+        .expect(201)
+    })
+    it(`Responds with no user when looking for the feature not match`, () => {
+      return request
+        .get(`/api/v1/features?feature=${feature}&enabled=false`)
+        .expect((res) => {
+          res.status.should.be.equal(200)
+          expect(Array.isArray(res.body.result)).to.be.true
+          expect(res.body.result.length).to.be.equal(0)
+        })
+    })
+    // it(`Responds with users when looking for the user after update`, () => {
+    //   return request
+    //     .get(`/api/v1/users?name=${name}&beta=false`)
+    //     .expect((res) => {
+    //       res.status.should.be.equal(200)
+    //       expect(Array.isArray(res.body.result)).to.be.true
+    //       expect(res.body.result.length).to.be.equal(1)
+    //     })
+    // })
+    // it(`Responds with flags when looking for the user`, () => {
+    //   return request
+    //     .get(`/api/v1/features/${name}/features`)
+    //     .expect((res) => {
+    //       res.status.should.be.equal(200)
+    //       expect(Array.isArray(res.body.result)).to.be.true
+    //       expect(res.body.result.length).to.be.equal(0)
+    //     })
+    // })
   })
 })

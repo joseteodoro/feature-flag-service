@@ -96,38 +96,4 @@ describe.only(`users endpoint suite`, () => {
         })
     })
   })
-  // context('When listing users', () => {
-  //   it(`Responds with users`, () => {
-  //     return request
-  //       .get(`/api/v1/users?beta=true`)
-  //       .expect((res) => {
-  //         res.status.should.be.equal(200)
-  //         console.log(res.body)
-  //       })
-  //   })
-  // })
-  // context('When given no registered feature', () => {
-  //   it(`Responds with empty when listing by name`, () => {
-  //     request.get(`${ENDPOINT}?name=banana&enabled=false`)
-  //       .expect(200, { result: [] })
-  //   })
-  // })
-  // context('When creating a feature', () => {
-  //   it(`Responds with created`, async () => {
-  //     const feature = {
-  //       name: 'banana-phone',
-  //       enabled: true,
-  //       author: 'ring ring ring',
-  //     }
-
-  //     await request
-  //       .post(`${ENDPOINT}`)
-  //       .set('Content-Type', 'application/json')
-  //       .send(feature)
-  //       .expect(201)
-
-  //     return request.get(`${ENDPOINT}?name=${feature.name}`)
-  //       .expect(200)
-  //   })
-  // })
 })
