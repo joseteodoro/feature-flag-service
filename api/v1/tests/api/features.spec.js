@@ -87,6 +87,62 @@ describe.only(`features endpoint suite`, () => {
           expect(res.body.result.length).to.be.equal(0)
         })
     })
+    // router.put('/features/:feature/enable', features.enable)
+    // router.put('/features/:feature/disable', features.disable)
+    describe('when enabling feature', () => {
+      it(`Responds with no user when looking for the feature not match`, () => {
+        return request
+          .get(`/api/v1/features?feature=${feature}&enabled=false`)
+          .expect((res) => {
+            res.status.should.be.equal(200)
+            expect(Array.isArray(res.body.result)).to.be.true
+            expect(res.body.result.length).to.be.equal(0)
+          })
+      })
+      it(`Responds with success when enabling`, () => {
+        return request
+          .put(`/api/v1/features/${feature}/enable`)
+          .set('Content-Type', 'application/json')
+          .expect(201)
+      })
+      it(`Responds with user when looking for the feature match`, () => {
+        return request
+          .get(`/api/v1/features?feature=${feature}&enabled=true`)
+          .expect((res) => {
+            res.status.should.be.equal(200)
+            expect(Array.isArray(res.body.result)).to.be.true
+            expect(res.body.result.length).to.be.equal(1)
+          })
+      })
+    })
+    describe('when disabling feature', () => {
+      it(`Responds with no user when looking for the feature not match`, () => {
+        return request
+          .get(`/api/v1/features?feature=${feature}&enabled=false`)
+          .expect((res) => {
+            res.status.should.be.equal(200)
+            expect(Array.isArray(res.body.result)).to.be.true
+            expect(res.body.result.length).to.be.equal(0)
+          })
+      })
+      it(`Responds with success when disabling`, () => {
+        return request
+          .put(`/api/v1/features/${feature}/disable`)
+          .set('Content-Type', 'application/json')
+          .expect(204)
+      })
+      it(`Responds with user when looking for the feature match`, () => {
+        console.log('>>>>>>>>>', { feature })
+        return request
+          .get(`/api/v1/features?feature=${feature}&enabled=false`)
+          .expect((res) => {
+            res.status.should.be.equal(200)
+            expect(Array.isArray(res.body.result)).to.be.true
+            expect(res.body.result.length).to.be.equal(1)
+          })
+      })
+    })
+
     // it(`Responds with users when looking for the user after update`, () => {
     //   return request
     //     .get(`/api/v1/users?name=${name}&beta=false`)
