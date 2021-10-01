@@ -6,7 +6,7 @@ const API_VERSION = 'v1'
 
 const ENDPOINT = `/api/${API_VERSION}/features`
 
-describe.only(`features endpoint suite`, () => {
+describe(`features endpoint suite`, () => {
   let sandbox, request
   beforeEach(async () => {
     request = await createTestServer()

@@ -1,7 +1,7 @@
 const { feature: repository } = require('../../../src/models/repositories')
 const uuid = require('uuid').v4
 
-describe.only(`feature suite`, () => {
+describe(`feature suite`, () => {
   context('When connected', () => {
     it(`should load`, async () => {
       const mnemonic = uuid()

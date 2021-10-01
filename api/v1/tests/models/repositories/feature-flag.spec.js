@@ -3,7 +3,7 @@ const { featureFlag: repository } = require('../../../src/models/repositories')
 const models = require('../../../src/models')
 const { expect } = require('chai')
 
-describe.only(`feature-flag suite`, () => {
+describe(`feature-flag suite`, () => {
   let sandbox
 
   beforeEach(() => {
