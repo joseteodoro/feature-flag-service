@@ -1,7 +1,7 @@
 {
   "name": "feature-flag",
   "version": "1.0.0",
-  "description": "Apoio Feature Flag",
+  "description": "Feature Flag",
   "main": "server/index.js",
   "scripts": {
     "start": "npm run sequelize:migrate:secret && node --max-old-space-size=128 server/index.js",
